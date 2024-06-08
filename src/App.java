@@ -7,8 +7,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -17,12 +15,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mysql.cj.jdbc.Driver;
 
 public class App extends Application {
     private Admin admin;
     private List<Customer> customers;
-    private Customer loggedInCustomer; // Track logged-in customer
     private Stage primaryStage;
     private Scene mainScene;
 
@@ -139,24 +135,22 @@ public class App extends Application {
 
         viewServicesButton.setOnAction(e -> {
             String name = nameField.getText();
-            int id = Integer.parseInt(idField.getText()); 
-            Customer customer = findCustomer(name, id);
-            if (customer == null) {
+            if (name.isEmpty()) {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setContentText("Please log in to view your services.");
+                alert.setContentText("Please enter your name to view your services.");
                 alert.show();
                 return;
             }
         
             StringBuilder servicesText = new StringBuilder();
-            for (Customer cust : customers) {
-                if (cust.getName().equals(customer.getName())) {
-                    servicesText.append(cust.displayReceipt()).append("\n");
+            for (Customer customer : customers) {
+                if (customer.getName().equals(name)) {
+                    servicesText.append(customer.displayReceipt()).append("\n");
                 }
             }
         
             if (servicesText.length() == 0) {
-                servicesText.append("No services found for the logged-in customer.");
+                servicesText.append("No services found for the given name.");
             }
         
             servicesArea.setText(servicesText.toString());
@@ -316,13 +310,13 @@ public class App extends Application {
         TableColumn<Customer, String> serviceTypeColumn = new TableColumn<>("Service Type");
         serviceTypeColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getServiceType()));
 
-//         TableColumn<Customer, Date> serviceDateColumn = new TableColumn<>("Service Date");
-// serviceDateColumn.setCellValueFactory(cellData ->
-//         new SimpleObjectProperty<>(cellData.getValue().getServiceDate()));
+        TableColumn<Customer, Date> serviceDateColumn = new TableColumn<>("Service Date");
+        serviceDateColumn.setCellValueFactory(cellData ->
+        new SimpleObjectProperty<>(cellData.getValue().getServiceDate()));
 
-// TableColumn<Customer, Date> deliveryDateColumn = new TableColumn<>("Delivery Date");
-// deliveryDateColumn.setCellValueFactory(cellData ->
-//         new SimpleObjectProperty<>(cellData.getValue().getDeliveryDate()));
+        TableColumn<Customer, Date> deliveryDateColumn = new TableColumn<>("Delivery Date");
+        deliveryDateColumn.setCellValueFactory(cellData ->
+        new SimpleObjectProperty<>(cellData.getValue().getDeliveryDate()));
 
 
         TableColumn<Customer, Double> priceColumn = new TableColumn<>("Total Price");
