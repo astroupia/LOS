@@ -201,62 +201,26 @@ public class App extends Application {
     ResultSet rs = null;
     Customer customer = null;
 
-    try {
-        conn = DatabaseUtil.getConnection(); // Establish database connection (implement this method)
-        String sql = "SELECT * FROM customers WHERE id = ?";
-        stmt = conn.prepareStatement(sql);
-        stmt.setInt(1, id);
-        rs = stmt.executeQuery();
-
-        if (rs.next()) {
-            // Retrieve customer details from ResultSet
-            String customerName = rs.getString("name");
-            int db_id = rs.getInt("id");
-            String serviceType = rs.getString("serviceType");
-            Date serviceDate = rs.getDate("serviceDate");
-            Date deliveryDate = rs.getDate("deliveryDate");
-
-            // Verify if retrieved customer matches the provided name and ID
-            if (customerName.equals(name) && db_id == id) {
-                customer = new Customer(customerName, serviceType, serviceDate, deliveryDate, null); // Service object is not fetched in this method
-                return customer; // Return customer if verification is successful
-            }
-        }
-    } catch (SQLException e) {
-        e.printStackTrace();
-        // Handle SQLException as needed
-    } finally {
-        // Close resources
-        DatabaseUtil.closeResultSet(rs);
-        DatabaseUtil.closeStatement(stmt);
-        DatabaseUtil.closeConnection(conn);
-    }
-
-    return null; // Return null if customer is not found or verification fails
-}
-
-
-    private List<Customer> fetchAllCustomers() {
-        List<Customer> customers = new ArrayList<>();
-        Connection conn = null;
-        Statement stmt = null;
-        ResultSet rs = null;
-
         try {
             conn = DatabaseUtil.getConnection(); // Establish database connection (implement this method)
-            String sql = "SELECT * FROM customers";
-            stmt = conn.createStatement();
-            rs = stmt.executeQuery(sql);
+            String sql = "SELECT * FROM customers WHERE id = ?";
+            stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, id);
+            rs = stmt.executeQuery();
 
-            while (rs.next()) {
+            if (rs.next()) {
                 // Retrieve customer details from ResultSet
                 String customerName = rs.getString("name");
+                int db_id = rs.getInt("id");
                 String serviceType = rs.getString("serviceType");
                 Date serviceDate = rs.getDate("serviceDate");
                 Date deliveryDate = rs.getDate("deliveryDate");
 
-                Customer customer = new Customer(customerName, serviceType, serviceDate, deliveryDate, null);
-                customers.add(customer);
+                // Verify if retrieved customer matches the provided name and ID
+                if (customerName.equals(name) && db_id == id) {
+                    customer = new Customer(customerName, serviceType, serviceDate, deliveryDate, null); // Service object is not fetched in this method
+                    return customer; // Return customer if verification is successful
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -264,9 +228,11 @@ public class App extends Application {
         } finally {
             // Close resources
             DatabaseUtil.closeResultSet(rs);
+            DatabaseUtil.closeStatement(stmt);
             DatabaseUtil.closeConnection(conn);
         }
-        return customers;
+
+        return null; // Return null if customer is not found or verification fails
     }
 
     private void switchToAdminMode() {
@@ -301,11 +267,11 @@ public class App extends Application {
         TableColumn<Customer, Double> priceColumn = new TableColumn<>("Total Price");
         priceColumn.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getService().getPrice()).asObject());
     
-        servicesTable.getColumns().add(nameColumn);
-        servicesTable.getColumns().add(serviceTypeColumn);
-        servicesTable.getColumns().add(serviceDateColumn);
-        servicesTable.getColumns().add(deliveryDateColumn);
-        servicesTable.getColumns().add(priceColumn);
+        @SuppressWarnings("unchecked")
+        servicesTable.getColumns().addAll(nameColumn, serviceTypeColumn, serviceDateColumn, deliveryDateColumn, priceColumn);
+    
+        List<Customer> allCustomers = fetchAllCustomers();
+        servicesTable.getItems().addAll(allCustomers);
     
         filterButton.setOnAction(e -> {
             LocalDate startDateValue = startDatePicker.getValue();
@@ -332,11 +298,9 @@ public class App extends Application {
         adminLayout.add(createBackButton("Back", mainScene), 0, 4, 2, 1);
     
         primaryStage.setScene(adminScene);
-    
-        // Fetch data and populate the table when switching to admin mode
-        List<Customer> allCustomers = fetchAllCustomers();
-        servicesTable.getItems().setAll(allCustomers);
     }
+    
+
     
     public static void main(String[] args) {
         launch(args);
