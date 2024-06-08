@@ -7,6 +7,8 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -14,6 +16,8 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.mysql.cj.jdbc.Driver;
 
 public class App extends Application {
     private Admin admin;
@@ -236,48 +240,42 @@ public class App extends Application {
     }
     
     private List<Customer> fetchAllCustomers() {
+        
         List<Customer> customers = new ArrayList<>();
-        Connection conn = null;
-        Statement stmt = null;
-        ResultSet rs = null;
-
         try {
-            conn = DatabaseUtil.getConnection(); // Implement this method to get database connection
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/laundromat", "root", "");
             String sql = "SELECT * FROM customers";
-            stmt = conn.createStatement();
-            rs = stmt.executeQuery(sql);
-
-            while (rs.next()) {
-                // Retrieve customer details from ResultSet
-                String customerName = rs.getString("name");
-                String serviceType = rs.getString("serviceType");
-                Date serviceDate = rs.getDate("serviceDate");
-                Date deliveryDate = rs.getDate("deliveryDate");
-                double servicePrice = rs.getDouble("servicePrice");
-
-                Service service;
-                if ("Dry Cleaning".equals(serviceType)) {
-                    DryCleaningService dryCleaningService = new DryCleaningService();
-                    dryCleaningService.addItem("Example Item", servicePrice); // Example item and price
-                    service = dryCleaningService;
-                } else {
-                    WetCleaningService wetCleaningService = new WetCleaningService(servicePrice); // Example price per kg
-                    wetCleaningService.setWeight(2); // Example weight
-                    service = wetCleaningService;
+            try (Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery(sql)) {
+    
+                while (rs.next()) {
+                    String customerName = rs.getString("name");
+                    String serviceType = rs.getString("serviceType");
+                    Date serviceDate = rs.getDate("serviceDate");
+                    Date deliveryDate = rs.getDate("deliveryDate");
+                    double amountPaid = rs.getDouble("amountPaid");
+    
+                    Service service;
+                    if ("Dry Cleaning".equals(serviceType)) {
+                        DryCleaningService dryCleaningService = new DryCleaningService();
+                        dryCleaningService.addItem("DryCleaning Cloth", amountPaid); // amount paid
+                        service = dryCleaningService;
+                    } else {
+                        WetCleaningService wetCleaningService = new WetCleaningService(amountPaid); // Example price per kg
+                        wetCleaningService.setWeight(2); // Example weight
+                        service = wetCleaningService;
+                    }
+    
+                    Customer customer = new Customer(customerName, serviceType, serviceDate, deliveryDate, service);
+                    customers.add(customer);
                 }
-
-                Customer customer = new Customer(customerName, serviceType, serviceDate, deliveryDate, service);
-                customers.add(customer);
             }
         } catch (SQLException se) {
             se.printStackTrace();
-        } finally {
-            // Close resources
-            DatabaseUtil.closeResultSet(rs);
-            DatabaseUtil.closeConnection(conn);
         }
         return customers;
     }
+    
 
     private void switchToAdminMode() {
         GridPane adminLayout = new GridPane();
@@ -341,7 +339,8 @@ public class App extends Application {
         adminLayout.add(createBackButton("Back", mainScene), 0, 4, 2, 1);
 
         primaryStage.setScene(adminScene);
-    }    
+    }
+
     public static void main(String[] args) {
         launch(args);
     }
