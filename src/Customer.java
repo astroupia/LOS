@@ -1,4 +1,8 @@
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Date;
 
 public class Customer {
     private String name;
@@ -14,6 +18,7 @@ public class Customer {
         this.serviceDate = serviceDate;
         this.deliveryDate = deliveryDate;
         this.service = service;
+        this.id = -1; // Initialize id to a default value, or fetch from database in getId()
     }
 
     public void setServiceType(String serviceType) {
@@ -92,34 +97,41 @@ public class Customer {
         return service;
     }
 
-    // Method to retrieve customer ID (to be implemented)
+    // Getter and Setter for customer ID
     public int getId() {
-            Connection conn = null;
-            PreparedStatement stmt = null;
-            ResultSet rs = null;
-            int customerId = 0; // Default value if no customer ID found
-
-            try {
-                conn = DatabaseUtil.getConnection(); // Assuming this method returns a Connection
-                String sql = "SELECT customerId FROM customers WHERE name = ? AND serviceDate = ?";
-                stmt = conn.prepareStatement(sql);
-                stmt.setString(1, name); // Assuming 'name' is a field in Customer class
-                stmt.setDate(2, new java.sql.Date(serviceDate.getTime())); // Assuming 'serviceDate' is a field in Customer class
-                rs = stmt.executeQuery();
-
-                if (rs.next()) {
-                    customerId = rs.getInt("customerId");
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                // Handle SQLException as needed
-            } finally {
-                DatabaseUtil.closeResultSet(rs);
-                DatabaseUtil.closeStatement(stmt);
-                DatabaseUtil.closeConnection(conn);
-            }
-
-            return customerId;
+        if (id == -1) {
+            // Fetch from database if not initialized
+            id = retrieveCustomerIdFromDatabase();
         }
+        return id;
     }
 
+    private int retrieveCustomerIdFromDatabase() {
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        int customerId = -1; // Default value if no customer ID found
+
+        try {
+            conn = DatabaseUtil.getConnection(); // Assuming this method returns a Connection
+            String sql = "SELECT customerId FROM customers WHERE name = ? AND serviceDate = ?";
+            stmt = conn.prepareStatement(sql);
+            stmt.setString(1, name); // Assuming 'name' is a field in Customer class
+            stmt.setDate(2, new java.sql.Date(serviceDate.getTime())); // Assuming 'serviceDate' is a field in Customer class
+            rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                customerId = rs.getInt("customerId");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle SQLException as needed
+        } finally {
+            DatabaseUtil.closeResultSet(rs);
+            DatabaseUtil.closeStatement(stmt);
+            DatabaseUtil.closeConnection(conn);
+        }
+
+        return customerId;
+    }
+}
