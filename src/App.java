@@ -311,13 +311,10 @@ public class App extends Application {
         serviceTypeColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getServiceType()));
 
         TableColumn<Customer, Date> serviceDateColumn = new TableColumn<>("Service Date");
-        serviceDateColumn.setCellValueFactory(cellData ->
-        new SimpleObjectProperty<>(cellData.getValue().getServiceDate()));
+        serviceDateColumn.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getServiceDate()));
 
         TableColumn<Customer, Date> deliveryDateColumn = new TableColumn<>("Delivery Date");
-        deliveryDateColumn.setCellValueFactory(cellData ->
-        new SimpleObjectProperty<>(cellData.getValue().getDeliveryDate()));
-
+        deliveryDateColumn.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getDeliveryDate()));
 
         TableColumn<Customer, Double> priceColumn = new TableColumn<>("Total Price");
         priceColumn.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getService().getPrice()).asObject());
