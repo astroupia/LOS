@@ -18,7 +18,6 @@ public class Customer {
         this.serviceDate = serviceDate;
         this.deliveryDate = deliveryDate;
         this.service = service;
-        this.id = -1; // Initialize id to a default value, or fetch from database in getId()
     }
 
     public void setServiceType(String serviceType) {
@@ -114,14 +113,14 @@ public class Customer {
 
         try {
             conn = DatabaseUtil.getConnection(); // Assuming this method returns a Connection
-            String sql = "SELECT customerId FROM customers WHERE name = ? AND serviceDate = ?";
+            String sql = "SELECT id FROM customers WHERE name = ? AND serviceDate = ?";
             stmt = conn.prepareStatement(sql);
             stmt.setString(1, name); // Assuming 'name' is a field in Customer class
             stmt.setDate(2, new java.sql.Date(serviceDate.getTime())); // Assuming 'serviceDate' is a field in Customer class
             rs = stmt.executeQuery();
 
             if (rs.next()) {
-                customerId = rs.getInt("customerId");
+                customerId = rs.getInt("id");
             }
         } catch (SQLException e) {
             e.printStackTrace();
