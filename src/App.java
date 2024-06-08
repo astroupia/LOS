@@ -275,61 +275,69 @@ public class App extends Application {
         adminLayout.setHgap(10);
         adminLayout.setVgap(10);
         adminLayout.setAlignment(Pos.CENTER);
-
+    
         Scene adminScene = new Scene(adminLayout, 800, 600);
-
+    
         Label filterLabel = new Label("Filter Services by Date Range:");
         DatePicker startDatePicker = new DatePicker();
         DatePicker endDatePicker = new DatePicker();
-
+    
         Button filterButton = new Button("Filter");
         TableView<Customer> servicesTable = new TableView<>();
         servicesTable.setEditable(false);
-
+    
         TableColumn<Customer, String> nameColumn = new TableColumn<>("Customer Name");
         nameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getName()));
-
+    
         TableColumn<Customer, String> serviceTypeColumn = new TableColumn<>("Service Type");
         serviceTypeColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getServiceType()));
-
+    
         TableColumn<Customer, Date> serviceDateColumn = new TableColumn<>("Service Date");
         serviceDateColumn.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getServiceDate()));
-
+    
         TableColumn<Customer, Date> deliveryDateColumn = new TableColumn<>("Delivery Date");
         deliveryDateColumn.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getDeliveryDate()));
-
+    
         TableColumn<Customer, Double> priceColumn = new TableColumn<>("Total Price");
         priceColumn.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getService().getPrice()).asObject());
-
-        servicesTable.getColumns().addAll(nameColumn, serviceTypeColumn, serviceDateColumn, deliveryDateColumn, priceColumn);
-
+    
+        servicesTable.getColumns().add(nameColumn);
+        servicesTable.getColumns().add(serviceTypeColumn);
+        servicesTable.getColumns().add(serviceDateColumn);
+        servicesTable.getColumns().add(deliveryDateColumn);
+        servicesTable.getColumns().add(priceColumn);
+    
         filterButton.setOnAction(e -> {
             LocalDate startDateValue = startDatePicker.getValue();
             LocalDate endDateValue = endDatePicker.getValue();
-
+    
             if (startDateValue == null || endDateValue == null) {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setContentText("Both start date and end date must be selected.");
                 alert.show();
                 return;
             }
-
+    
             Date startDate = Date.valueOf(startDateValue);
-            Date endDate = Date.valueOf(endDateValue);;
+            Date endDate = Date.valueOf(endDateValue);
             List<Customer> filteredServices = admin.getServicesInRange(startDate, endDate);
             servicesTable.getItems().setAll(filteredServices);
         });
-
+    
         adminLayout.add(filterLabel, 0, 0, 2, 1);
         adminLayout.add(startDatePicker, 0, 1);
         adminLayout.add(endDatePicker, 1, 1);
         adminLayout.add(filterButton, 0, 2, 2, 1);
         adminLayout.add(servicesTable, 0, 3, 2, 1);
         adminLayout.add(createBackButton("Back", mainScene), 0, 4, 2, 1);
-
+    
         primaryStage.setScene(adminScene);
+    
+        // Fetch data and populate the table when switching to admin mode
+        List<Customer> allCustomers = fetchAllCustomers();
+        servicesTable.getItems().setAll(allCustomers);
     }
-
+    
     public static void main(String[] args) {
         launch(args);
     }
