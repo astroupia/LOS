@@ -85,18 +85,18 @@ public class App extends Application {
             String serviceType = serviceTypeBox.getValue();
             LocalDate serviceDateValue = serviceDatePicker.getValue();
             LocalDate deliveryDateValue = deliveryDatePicker.getValue();
-
+        
             if (serviceType == null || serviceDateValue == null || deliveryDateValue == null) {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setContentText("All fields must be filled.");
                 alert.show();
                 return;
             }
-
+        
             Date serviceDate = Date.valueOf(serviceDateValue);
             Date deliveryDate = Date.valueOf(deliveryDateValue);
             Service service;
-
+        
             if ("Dry Cleaning".equals(serviceType)) {
                 service = new DryCleaningService();
                 // Example items for dry cleaning service
@@ -106,16 +106,30 @@ public class App extends Application {
                 service = new WetCleaningService(200); // Example price per kg
                 ((WetCleaningService) service).setWeight(2); // Example weight
             }
-
-            Customer customer = loggedInCustomer; // Use logged-in customer
+        
+            // Fetch customer details from the database using name and id fields
+            String name = nameField.getText();
+            int id = Integer.parseInt(idField.getText()); // Get ID input
+        
+            Customer customer = findCustomer(name, id);
+            if (customer == null) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setContentText("Customer not found. Please check your name and ID.");
+                alert.show();
+                return;
+            }
+        
+            // Set service details for the customer
             customer.setServiceType(serviceType);
             customer.setServiceDate(serviceDate);
             customer.setDeliveryDate(deliveryDate);
             customer.setService(service);
-
+        
+            // Register the service for the customer
             customer.registerService();
             customers.add(customer);
-
+        
+            // Update the receipt area with the customer's service details
             receiptArea.setText(customer.displayReceipt());
         });
 
@@ -124,26 +138,29 @@ public class App extends Application {
         servicesArea.setEditable(false);
 
         viewServicesButton.setOnAction(e -> {
-            if (loggedInCustomer == null) {
+            String name = nameField.getText();
+            int id = Integer.parseInt(idField.getText()); 
+            Customer customer = findCustomer(name, id);
+            if (customer == null) {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setContentText("Please log in to view your services.");
                 alert.show();
                 return;
             }
-
+        
             StringBuilder servicesText = new StringBuilder();
-            for (Customer customer : customers) {
-                if (customer.getName().equals(loggedInCustomer.getName())) {
-                    servicesText.append(customer.displayReceipt()).append("\n");
+            for (Customer cust : customers) {
+                if (cust.getName().equals(customer.getName())) {
+                    servicesText.append(cust.displayReceipt()).append("\n");
                 }
             }
-
+        
             if (servicesText.length() == 0) {
                 servicesText.append("No services found for the logged-in customer.");
             }
-
+        
             servicesArea.setText(servicesText.toString());
-
+        
             // Display services in a new window
             Stage servicesStage = new Stage();
             servicesStage.setTitle("Your Services");
@@ -151,6 +168,7 @@ public class App extends Application {
             servicesStage.setScene(servicesScene);
             servicesStage.show();
         });
+        
 
         loginButton.setOnAction(e -> {
             String name = nameField.getText();
@@ -164,8 +182,6 @@ public class App extends Application {
                 alert.show();
                 return;
             }
-
-            // loggedInCustomer = customer;
 
             customerLayout.getChildren().clear(); // Clear previous login fields
 
@@ -300,16 +316,19 @@ public class App extends Application {
         TableColumn<Customer, String> serviceTypeColumn = new TableColumn<>("Service Type");
         serviceTypeColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getServiceType()));
 
-        TableColumn<Customer, Date> serviceDateColumn = new TableColumn<>("Service Date");
-        serviceDateColumn.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getServiceDate()));
+//         TableColumn<Customer, Date> serviceDateColumn = new TableColumn<>("Service Date");
+// serviceDateColumn.setCellValueFactory(cellData ->
+//         new SimpleObjectProperty<>(cellData.getValue().getServiceDate()));
 
-        TableColumn<Customer, Date> deliveryDateColumn = new TableColumn<>("Delivery Date");
-        deliveryDateColumn.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getDeliveryDate()));
+// TableColumn<Customer, Date> deliveryDateColumn = new TableColumn<>("Delivery Date");
+// deliveryDateColumn.setCellValueFactory(cellData ->
+//         new SimpleObjectProperty<>(cellData.getValue().getDeliveryDate()));
+
 
         TableColumn<Customer, Double> priceColumn = new TableColumn<>("Total Price");
         priceColumn.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getService().getPrice()).asObject());
 
-        servicesTable.getColumns().addAll(nameColumn, serviceTypeColumn, serviceDateColumn, deliveryDateColumn, priceColumn);
+        servicesTable.getColumns().addAll(nameColumn, serviceTypeColumn, priceColumn);
 
         List<Customer> allCustomers = fetchAllCustomers();
         servicesTable.getItems().addAll(allCustomers);
